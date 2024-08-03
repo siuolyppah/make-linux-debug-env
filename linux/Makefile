@@ -10,7 +10,6 @@ JOBS ?= 16
 .PHONY: all
 all: linux-install
 
-.PHONY: linux-source
 linux-source: $(src_dir)
 
 $(src_dir): linux-$(linux_version).tar.xz
@@ -24,7 +23,7 @@ linux-$(linux_version).tar.xz:
 
 # apply custom config options
 .PHONY: linux-config
-linux-config: $(src_dir)
+linux-config: linux-source
 	@echo "Applying custom config options..."
 	cd $(src_dir) && make defconfig
 	@while IFS= read -r line; do \
@@ -55,9 +54,14 @@ linux-build: linux-config
 .PHONY: linux-install
 linux-install: linux-build
 	mkdir -p $(install_dir)
-	cd $(src_dir) && make INSTALL_PATH=$(PWD)/$(install_dir) install
+	cd $(src_dir) && make INSTALL_PATH=../$(install_dir) install
 
 .PHONY: clean
 clean:
-	cd $(src_dir) && make clean
+	@if [ -d $(src_dir) ]; then \
+		cd $(src_dir) && make uninstall && make clean; \
+	fi
+
+.PHONY: distclean
+distclean:
 	rm -rf $(src_dir) $(install_dir) linux-$(linux_version).tar.xz

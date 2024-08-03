@@ -1,0 +1,8 @@
+#!/bin/bash
+qemu-system-x86_64 \
+    -kernel {kernel_image} \
+    -hda {initrd_image} \
+    -append "nokaslr root=/dev/sda console=ttyS0" \
+    -smp 1 \
+    -m 4G \
+    -nographic
