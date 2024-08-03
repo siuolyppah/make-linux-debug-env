@@ -1,2 +1,3 @@
 # busybox tar,src,install
 busybox/busybox-*
+busybox/initrd.ext4
