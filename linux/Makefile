@@ -9,19 +9,15 @@ scripts_config := $(src_dir)/scripts/config
 JOBS ?= 16
 MAKE = make -f ../$(src_dir)/Makefile
 
+LINUX_GIT_REPO := https://github.com/torvalds/linux.git
+
 .PHONY: all
 all: linux-install
 
+$(src_dir):
+	git clone --depth 1 --branch v$(linux_version) $(LINUX_GIT_REPO) $(src_dir)
+
 linux-source: $(src_dir)
-
-$(src_dir): linux-$(linux_version).tar.xz
-	mkdir -p $(src_dir)
-	tar -xJf linux-$(linux_version).tar.xz
-
-# download linux-${version}.tar.xz
-linux-$(linux_version).tar.xz:
-	@echo "Downloading Linux version $(linux_version)..."
-	wget https://cdn.kernel.org/pub/linux/kernel/v$(firstword $(subst ., ,$(linux_version))).x/linux-$(linux_version).tar.xz -O linux-$(linux_version).tar.xz
 
 $(build_dir):
 	mkdir $@
