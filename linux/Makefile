@@ -2,10 +2,12 @@
 
 linux_version := $(shell cat ../config/linux_version.txt)
 src_dir := linux-$(linux_version)
+build_dir := linux-$(linux_version)-build
 install_dir := linux-$(linux_version)-install
 config_file := ../config/linux_config.txt
 scripts_config := $(src_dir)/scripts/config
 JOBS ?= 16
+MAKE = make -f ../$(src_dir)/Makefile
 
 .PHONY: all
 all: linux-install
@@ -21,11 +23,14 @@ linux-$(linux_version).tar.xz:
 	@echo "Downloading Linux version $(linux_version)..."
 	wget https://cdn.kernel.org/pub/linux/kernel/v$(firstword $(subst ., ,$(linux_version))).x/linux-$(linux_version).tar.xz -O linux-$(linux_version).tar.xz
 
+$(build_dir):
+	mkdir $@
+
 # apply custom config options
 .PHONY: linux-config
-linux-config: linux-source
+linux-config: linux-source $(build_dir)
 	@echo "Applying custom config options..."
-	cd $(src_dir) && make defconfig
+	cd $(build_dir) && $(MAKE) defconfig 
 	@while IFS= read -r line; do \
 		line=$$(echo $$line | xargs); \
 		if [ -z "$$line" ] || [ $${line:0:1} == "#" ]; then \
@@ -34,34 +39,34 @@ linux-config: linux-source
 		option=$$(echo $$line | cut -d'=' -f1); \
 		value=$$(echo $$line | cut -d'=' -f2); \
 		if [ "$$value" == "y" ]; then \
-			$(scripts_config) --file $(src_dir)/.config --enable $$option; \
+			$(scripts_config) --file $(build_dir)/.config --enable $$option; \
 		elif [ "$$value" == "m" ]; then \
-			$(scripts_config) --file $(src_dir)/.config --module $$option; \
+			$(scripts_config) --file $(build_dir)/.config --module $$option; \
 		elif [ "$$value" == "n" ]; then \
-			$(scripts_config) --file $(src_dir)/.config --disable $$option; \
+			$(scripts_config) --file $(build_dir)/.config --disable $$option; \
 		elif [[ "$$value" =~ ^[0-9]+$$ ]]; then \
-			$(scripts_config) --file $(src_dir)/.config --set-val $$option $$value; \
+			$(scripts_config) --file $(build_dir)/.config --set-val $$option $$value; \
 		elif [[ "$$value" =~ ^\".*\"$$ ]]; then \
-			$(scripts_config) --file $(src_dir)/.config --set-str $$option $${value//\"/}; \
+			$(scripts_config) --file $(build_dir)/.config --set-str $$option $${value//\"/}; \
 		fi; \
 	done < $(config_file)
-	cd $(src_dir) && make oldconfig
+	cd $(build_dir) && $(MAKE) oldconfig
 
 .PHONY: linux-build
 linux-build: linux-config
-	cd $(src_dir) && make -j$(JOBS)
+	cd $(build_dir) && $(MAKE) -j$(JOBS)
 
 .PHONY: linux-install
 linux-install: linux-build
 	mkdir -p $(install_dir)
-	cd $(src_dir) && make INSTALL_PATH=../$(install_dir) install
+	cd $(build_dir) && $(MAKE) INSTALL_PATH=../$(install_dir) install
 
 .PHONY: clean
 clean:
 	@if [ -d $(src_dir) ]; then \
-		cd $(src_dir) && make uninstall && make clean; \
+		cd $(build_dir) && $(MAKE) uninstall && $(MAKE) clean; \
 	fi
 
 .PHONY: distclean
 distclean:
-	rm -rf $(src_dir) $(install_dir) linux-$(linux_version).tar.xz
+	rm -rf $(src_dir) $(build_dir) $(install_dir) linux-$(linux_version).tar.xz

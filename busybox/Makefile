@@ -1,4 +1,6 @@
-# busybox/Makefile
+ifndef SUDO_PASSWD
+$(error SUDO_PASSWD is not set. Please set it and rerun the make command.)
+endif
 
 busybox_version := $(shell cat ../config/busybox_version.txt)
 src_dir := busybox-$(busybox_version)

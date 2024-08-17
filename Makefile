@@ -6,7 +6,7 @@ JOBS ?= 16
 linux_version := $(shell cat ./config/linux_version.txt)
 KERNEL_SRC_DIR := linux/linux-$(linux_version)
 
-KERNEL_IMAGE := linux/linux-$(shell cat config/linux_version.txt)/arch/x86/boot/bzImage
+KERNEL_IMAGE := linux/linux-$(shell cat config/linux_version.txt)-build/arch/x86/boot/bzImage
 INITRD_IMAGE := busybox/initrd.ext4
 
 RUN_QEMU_TEMPLATE := template/run_qemu.sh.in
