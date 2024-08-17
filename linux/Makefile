@@ -54,7 +54,7 @@ linux-config: linux-source $(build_dir)
 
 .PHONY: linux-build
 linux-build: linux-config
-	cd $(build_dir) && $(MAKE) -j$(JOBS)
+	cd $(build_dir) && bear --output ../$(src_dir)/compile_commands.json -- $(MAKE) -j$(JOBS)
 
 .PHONY: linux-install
 linux-install: linux-build
