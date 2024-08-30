@@ -8,7 +8,7 @@
       "name": "(gdb) linux",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceRoot}/../linux-6.6.35-build/vmlinux",
+      "program": "{initramfs}",
       "miDebuggerServerAddress": "localhost:1234",
       "args": [],
       "stopAtEntry": true,

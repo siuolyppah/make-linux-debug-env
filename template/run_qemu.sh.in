@@ -1,8 +1,10 @@
+# qemu-system-x86_64 -kernel linux-6.6-build/arch/x86/boot/bzImage -initrd ../busybox/initramfs.cpio.gz -nographic -append "nokaslr rdinit=/init console=ttyS0"
+# qemu-system-x86_64 -kernel linux-6.6-build/arch/x86/boot/bzImage -initrd ../busybox/initramfs.cpio.gz -nographic -append "nokaslr root=/dev/ram0 rdinit=/sbin/init  console=ttyS0"
 #!/bin/bash
 qemu-system-x86_64 \
     -kernel {kernel_image} \
-    -hda {initrd_image} \
-    -append "nokaslr root=/dev/sda console=ttyS0" \
+    -initrd {initramfs} \
+    -append "nokaslr root=/dev/ram0 rdinit=/sbin/init  console=ttyS0" \
     -smp 1 \
     -m 4G \
     -nographic
