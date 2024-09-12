@@ -70,13 +70,13 @@ linux-config: $(src_dir) $(build_dir)
 .PHONY: linux-build
 linux-build: debug linux-config
 	@echo -e "$(GREEN)Building Linux kernel...$(NC)"
-	@KBUILD_CFLAGS=${KBUILD_CFLAGS} bear --output $(src_dir)/compile_commands.json -- $(MAKE) > /dev/null
+	@KBUILD_CFLAGS=${KBUILD_CFLAGS} bear --append --output $(src_dir)/compile_commands.json -- $(MAKE) > /dev/null
 
 .PHONY: clean
 clean:
 	@if [ -d $(src_dir) ]; then \
 		echo -e "$(GREEN)Cleaning build directory...$(NC)"; \
-		@$(MAKE) clean > /dev/null; \
+		$(MAKE) clean > /dev/null; \
 	fi
 
 .PHONY: distclean
