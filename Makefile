@@ -24,7 +24,6 @@ initramfs:
 
 .PHONY: bzImage
 bzImage:
-	tree .
 	$(MAKE) -C linux linux-build
 
 define generate_qemu_script
