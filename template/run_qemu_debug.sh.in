@@ -3,6 +3,7 @@ qemu-system-x86_64 \
     -kernel {kernel_image} \
     -initrd {initramfs} \
     -append "nokaslr root=/dev/ram0 rdinit=/sbin/init  console=ttyS0" \
+    -net nic -net user,hostfwd=tcp::2222-:22 \
     -smp 1 \
     -m 4G \
     -nographic \

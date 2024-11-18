@@ -63,6 +63,14 @@ initramfs: busybox-install
 	@echo 'mount -o remount,rw /' 											>> $(mount_dir)/etc/init.d/rcS
 	@echo 'echo -e "Welcome to Linux"' 										>> $(mount_dir)/etc/init.d/rcS
 	@echo 'echo "Boot took $$(cut -d'\'' '\'' -f1 /proc/uptime) seconds"' 	>> $(mount_dir)/etc/init.d/rcS
+
+	@echo 'echo "Configuring network interface eth0..."' >> $(mount_dir)/etc/init.d/rcS
+	@echo 'ifconfig eth0 up' >> $(mount_dir)/etc/init.d/rcS
+	@echo 'ifconfig eth0 10.0.2.15 netmask 255.255.255.0' >> $(mount_dir)/etc/init.d/rcS
+	@echo 'route add default gw 10.0.2.2' >> $(mount_dir)/etc/init.d/rcS
+
+	@echo 'echo "nameserver 223.5.5.5" > /etc/resolv.conf' >> $(mount_dir)/etc/init.d/rcS
+
 	@chmod 755 $(mount_dir)/etc/init.d/rcS
 
 	@echo -e "$(BLUE)Setting up inittab...$(NC)"
