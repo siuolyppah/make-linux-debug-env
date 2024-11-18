@@ -6,7 +6,7 @@ scripts_config := $(src_dir)/scripts/config
 KBUILD_CFLAGS := "-fno-inline -fno-inline-functions -fno-inline-small-functions"
 MAKE = make -C $(src_dir) O=$(build_dir)
 
-LINUX_GIT_REPO := https://github.com/torvalds/linux.git
+LINUX_GIT_REPO := https://mirrors.ustc.edu.cn/linux.git
 
 # Color codes
 GREEN := \033[0;32m
