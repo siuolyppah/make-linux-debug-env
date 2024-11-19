@@ -13,6 +13,7 @@ VSCODE_LAUNCH_JSON_TEMPLATE := $(CURDIR)/template/vscode_launch.json.in
 GREEN := \033[0;32m
 BLUE := \033[0;34m
 NC := \033[0m # No Color
+export GREEN BLUE NC
 
 .PHONY: all
 all: initramfs bzImage run_qemu run_qemu_debug vscode_launch
@@ -24,7 +25,7 @@ initramfs:
 
 .PHONY: bzImage
 bzImage:
-	$(MAKE) -C linux linux-build
+	$(MAKE) -C linux bzImage
 
 define generate_qemu_script
 	@sed -e 's|{kernel_image}|$(KERNEL_BZIMAGE)|g' \
@@ -38,14 +39,14 @@ endef
 run_qemu:
 	@echo -e "${GREEN}Generating QEMU run script...${NC}"
 	$(call generate_qemu_script,$(RUN_QEMU_TEMPLATE),run_qemu.sh)
-	@echo -e "${GREEN}Run './run_qemu.sh' to start QEMU.${NC}"
+	@echo -e "${BLUE}Run './run_qemu.sh' to start QEMU.${NC}"
 
 # start qemu in gdb mode
 .PHONY: run_qemu_debug
 run_qemu_debug:
 	@echo -e "${GREEN}Generating QEMU debug run script...${NC}"
 	$(call generate_qemu_script,$(RUN_QEMU_DEBUG_TEMPLATE),run_qemu_debug.sh)
-	@echo -e "${GREEN}Run './run_qemu_debug.sh' to start QEMU in debug mode.${NC}"
+	@echo -e "${BLUE}Run './run_qemu_debug.sh' to start QEMU in debug mode.${NC}"
 
 # generate vscode launch.json for debugging
 .PHONY: vscode_launch
@@ -54,7 +55,7 @@ vscode_launch: bzImage
 	@if [ ! -d .vscode ]; then mkdir .vscode; fi
 	@mkdir -p $(KERNEL_SRC_DIR)/.vscode
 	@sed 's|"program": "{initramfs}"|"program": "$(KERNEL_VMLINUX)"|g' $(VSCODE_LAUNCH_JSON_TEMPLATE) > $(KERNEL_SRC_DIR)/.vscode/launch.json
-	@echo -e "${GREEN}You can debug with VSCode after QEMU GDB server running.${NC}"
+	@echo -e "${BLUE}You can debug with VSCode after QEMU GDB server running.${NC}"
 
 .PHONY: clean
 clean:

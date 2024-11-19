@@ -8,3 +8,5 @@ linux/linux-*
 # generated qemu wrapper srcipts
 run_qemu.sh
 run_qemu_debug.sh
+
+.state/

@@ -5,49 +5,58 @@ overwrite_config := ../config/busybox_config.txt
 initramfs := initramfs.cpio.gz
 mount_dir := initramfs_mount_dir
 
-# Color codes for output
-GREEN := \033[0;32m
-BLUE := \033[0;34m
-NC := \033[0m # No Color
+state_dir = .state
+tar_downed = $(state_dir)/tar_downed
+src_unziped = $(state_dir)/src_unziped
+src_configed = $(state_dir)/src_configed
+src_built = $(state_dir)/src_built
+src_installed = $(state_dir)/src_installed
+
 
 .PHONY: all
 all: initramfs
 
-busybox-source: $(src_dir)
+$(tar_downed):
+	@test -d $(state_dir) || mkdir -p $(state_dir)
 
-$(src_dir): busybox-$(busybox_version).tar.bz2
-	@echo -e "$(GREEN)Extracting BusyBox source...$(NC)"
-
-	@mkdir -p $(src_dir)
-	@tar -xjf busybox-$(busybox_version).tar.bz2 -C $(src_dir) --strip-components=1
-
-# download busybox-${version}.tar.bz2
-busybox-$(busybox_version).tar.bz2:
 	@echo -e "$(GREEN)Downloading BusyBox version $(busybox_version)...$(NC)"
 	@wget https://busybox.net/downloads/busybox-$(busybox_version).tar.bz2 -O busybox-$(busybox_version).tar.bz2
+	@touch $@
 
-# apply custom config options
-.PHONY: busybox-config
-busybox-config: busybox-source
+
+$(src_unziped): $(tar_downed)
+	@rm -rf $(src_dir)
+	@echo -e "$(GREEN)Extracting BusyBox source...$(NC)"
+	@mkdir -p $(src_dir)
+	@tar -xjf busybox-$(busybox_version).tar.bz2 -C $(src_dir) --strip-components=1
+	@touch $@
+
+
+$(src_configed): $(src_unziped)
 	@echo -e "$(GREEN)Applying custom config options...$(NC)"
 	@cd $(src_dir) && make defconfig > /dev/null
 	@python3 ./overwrite_config.py $(overwrite_config) $(src_dir)/.config
 	@cd $(src_dir) && make oldconfig > /dev/null
+	@touch $@
 
-.PHONY: busybox-build
-busybox-build: busybox-config
+
+$(src_built): $(src_configed)
 	@echo -e "$(GREEN)Building BusyBox...$(NC)"
 	@cd $(src_dir) && make > /dev/null
+	@touch $@
 
-.PHONY: busybox-install
-busybox-install: busybox-build
+
+$(src_installed): $(src_built)
 	@echo -e "$(GREEN)Installing BusyBox...$(NC)"
 	@mkdir -p $(install_dir)
 	@cd $(src_dir) && make CONFIG_PREFIX=../$(install_dir) install > /dev/null
+	@touch $@
+
+.PHONY: initramfs
+initramfs: $(initramfs)
 
 # bundle busybox build in an ext4 format file
-.PHONY: initramfs
-initramfs: busybox-install
+$(initramfs): $(src_installed)
 	@echo -e "$(GREEN)Creating initramfs...$(NC)"
 	@mkdir -p $(mount_dir)/{etc/init.d,dev,mnt,proc,sys,tmp}
 	@cp -arf $(install_dir)/. $(mount_dir)
@@ -95,13 +104,12 @@ initramfs: busybox-install
 .PHONY: clean
 clean:
 	@echo -e "$(GREEN)Cleaning...$(NC)"
-	@if [ -d $(src_dir) ]; then \
-		cd $(src_dir) && make uninstall > /dev/null && make clean > /dev/null; \
-	fi
+	@rm -rf $(src_dir)
+	@rm -rf $(src_unziped) $(src_configed) $(src_built) $(src_installed)
 	@rm -rf ./initramfs*
 
 .PHONY: distclean
 distclean:
 	@echo -e "$(GREEN)Performing complete cleanup...$(NC)"
-	@rm -rf $(src_dir) $(install_dir) busybox-$(busybox_version).tar.bz2
+	@rm -rf $(src_dir) $(install_dir) busybox-$(busybox_version).tar.bz2 $(state_dir)
 	@rm -rf ./initramfs*

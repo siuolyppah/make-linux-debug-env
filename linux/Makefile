@@ -8,40 +8,36 @@ MAKE = make -C $(src_dir) O=$(build_dir)
 
 LINUX_GIT_REPO := https://mirrors.ustc.edu.cn/linux.git
 
-# Color codes
-GREEN := \033[0;32m
-BLUE := \033[0;34m
-NC := \033[0m # No Color
-
-
-.PHONY: debug
-debug:
-	@echo -e "$(BLUE)Debugging Makefile variables:$(NC)"
-	@echo -e "$(BLUE)linux_version               = $(linux_version)$(NC)"
-	@echo -e "$(BLUE)src_dir                     = $(src_dir)$(NC)"
-	@echo -e "$(BLUE)build_dir                   = $(build_dir)$(NC)"
-	@echo -e "$(BLUE)config_file                 = $(config_file)$(NC)"
-	@echo -e "$(BLUE)scripts_config              = $(scripts_config)$(NC)"
-	@echo -e "$(BLUE)MAKE                        = $(MAKE)$(NC)"
-	@echo -e "$(BLUE)CURDIR                      = $(CURDIR)$(NC)"
+state_dir = .state
+src_cloned = $(state_dir)/src_cloned
+src_configed = $(state_dir)/src_configed
+src_built = $(state_dir)/src_built
+src_installed = $(state_dir)/src_installed
 
 
 .PHONY: all
-all: linux-build
+all: bzImage
 
-$(src_dir):
+$(src_cloned):
+	@test -d $(state_dir) || mkdir -p $(state_dir)
 	@echo -e "$(GREEN)Cloning Linux source...$(NC)"
-	@git clone --depth 1 --branch v$(linux_version) $(LINUX_GIT_REPO) $(src_dir)
+# git clone --depth 1 --branch v$(linux_version) $(LINUX_GIT_REPO) $(src_dir)
+	@test -d $(src_dir) || ( \
+		git init $(src_dir) && \
+		cd $(src_dir) && \
+		git remote add origin $(LINUX_GIT_REPO) \
+	)
+	@cd $(src_dir) && \
+		git fetch --depth 1 origin v$(linux_version) && \
+		git checkout FETCH_HEAD
+	@touch $@
 
-$(build_dir):
-	@mkdir -p $@
-
-# apply custom config options
-.PHONY: linux-config
-linux-config: $(src_dir) $(build_dir)
+$(src_configed): $(src_cloned)
 	@echo -e "$(GREEN)Applying custom config options...$(NC)"
-	$(MAKE) defconfig > /dev/null
+	@$(MAKE) defconfig > /dev/null
 	@echo -e "$(BLUE)Default configuration applied.$(NC)"
+
+	@test -d $(build_dir) || mkdir -p $(build_dir)
 
 	@while IFS= read -r line; do \
 		line=$$(echo $$line | xargs); \
@@ -66,11 +62,14 @@ linux-config: $(src_dir) $(build_dir)
 	$(MAKE) oldconfig > /dev/null
 
 	@echo -e "$(BLUE)Configuration updated.$(NC)"
+	@touch $@
 
-.PHONY: linux-build
-linux-build: debug linux-config
+# we want to rebuild kernel every time
+.PHONY: bzImage
+bzImage: $(src_configed)
 	@echo -e "$(GREEN)Building Linux kernel...$(NC)"
 	@KBUILD_CFLAGS=${KBUILD_CFLAGS} bear --append --output $(src_dir)/compile_commands.json -- $(MAKE) > /dev/null
+
 
 .PHONY: clean
 clean:
@@ -82,4 +81,4 @@ clean:
 .PHONY: distclean
 distclean:
 	@echo -e "$(GREEN)Performing complete cleanup...$(NC)"
-	@rm -rf $(src_dir) $(build_dir) linux-$(linux_version).tar.xz
+	@rm -rf $(src_dir) $(build_dir) linux-$(linux_version).tar.xz $(state_dir)
